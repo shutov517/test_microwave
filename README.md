@@ -12,10 +12,6 @@ docker-compose up --build
 
 after open in your browser [main page](http://127.0.0.1/index.html)
 
-**WARNING** 
-This is a test task and for the convenience of launching `.env` file is not in `.gitignore`.
-In all my production-ready services I have only `.example.env` but not `.env` in git repository.
-
 ---
 
 #### Testing
