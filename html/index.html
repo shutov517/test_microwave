@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Microwave App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .microwave-status {
+            margin-bottom: 20px;
+        }
+
+        .button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Microwave App</h1>
+    <div class="microwave-status">
+        <h2>Microwave Status:</h2>
+        <p>Power: <span id="power">0</span>%</p>
+        <p>Counter: <span id="counter">0</span>s</p>
+        <p>State: <span id="state">OFF</span></p>
+    </div>
+    <div class="buttons">
+        <button class="button" onclick="increasePower()">Increase Power +10%</button>
+        <button class="button" onclick="decreasePower()">Decrease Power -10%</button>
+        <button class="button" onclick="increaseCounter()">Increase Counter +10s</button>
+        <button class="button" onclick="decreaseCounter()">Decrease Counter -10s</button>
+        <button class="button" onclick="cancelMicrowave()">Cancel</button>
+    </div>
+    <script>
+        const socket = new WebSocket("ws://localhost:8000/ws/microwave");
+
+        socket.onopen = () => {
+            console.log("Connection established!");
+        };
+
+        socket.onmessage = (event) => {
+            console.log("State update:", event.data);
+            const state = JSON.parse(event.data);
+            document.getElementById('power').textContent = state.power;
+            document.getElementById('counter').textContent = state.counter;
+            document.getElementById('state').textContent = state.state;
+        };
+
+        socket.onclose = () => {
+            console.log("Connection closed!");
+        };
+
+        function increasePower() {
+            fetch('/microwave/power/increase', { method: 'POST' });
+        }
+
+        function decreasePower() {
+            fetch('/microwave/power/decrease', { method: 'POST' });
+        }
+
+        function increaseCounter() {
+            fetch('/microwave/counter/increase', { method: 'POST' });
+        }
+
+        function decreaseCounter() {
+            fetch('/microwave/counter/decrease', { method: 'POST' });
+        }
+
+        function cancelMicrowave() {
+            const token = prompt('Enter JWT token:');
+            fetch('/microwave/cancel', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+        }
+
+        function startCounterTimer() {
+            setInterval(() => {
+                const counterElement = document.getElementById('counter');
+                const powerElement = document.getElementById('power');
+                const stateElement = document.getElementById('state');
+                const counter = parseInt(counterElement.textContent);
+                const power = parseInt(powerElement.textContent);
+                if (counter > 0) {
+                    counterElement.textContent = counter - 1;
+                } else if (stateElement.textContent != 'OFF' && power == 0) {
+                    stateElement.textContent = 'OFF';
+                }
+
+            }, 1000);
+        }
+
+        startCounterTimer();
+    </script>
+</body>
+</html>
