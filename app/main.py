@@ -8,8 +8,7 @@ import uvicorn
 from fastapi import Depends, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi import FastAPI
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, model_validator
 from starlette.datastructures import State
 from passlib.context import CryptContext
 
@@ -55,11 +54,14 @@ async def shutdown_event():
 class MicrowaveState(BaseModel):
     power: int = 0
     counter: int = 0
+    state: Optional[str] = None
 
-    @computed_field
-    @property
-    def state(self) -> str:
-        return 'ON' if self.counter or self.power else 'OFF'
+    @model_validator(mode='before')
+    def compute_state(cls, data: dict) -> dict:
+        power = data.get('power', 0)
+        counter = data.get('counter', 0)
+        data['state'] = 'ON' if counter or power else 'OFF'
+        return data
 
 
 async def get_remaining_time():
