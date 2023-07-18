@@ -1,7 +1,9 @@
 aioredis==2.0.1
 fastapi==0.100.0
+passlib==1.7.4
 pydantic==2.0.3
 pydantic-settings==2.0.2
+python-multipart==0.0.6
 pyjwt==2.7.0
 starlette==0.27.0
 uvicorn==0.23.0
