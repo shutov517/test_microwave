@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from .main import app, get_redis_connection, generate_token
+from .main import app, get_redis_connection, generate_token, USER_DATA
 
 
 @pytest.fixture
@@ -11,7 +11,7 @@ def client():
 
 @pytest.fixture
 def authenticated_headers():
-    headers = {"Authorization": f"Bearer {generate_token()}"}
+    headers = {"Authorization": f"Bearer {generate_token('testuser')}"}
     return headers
 
 
@@ -77,7 +77,7 @@ async def test_counter(client):
 @pytest.mark.asyncio
 async def test_cancel_microwave(client, authenticated_headers):
     response = client.post("/microwave/cancel")
-    assert response.status_code == 403  # no token
+    assert response.status_code == 401  # no token
 
     client.post("/microwave/counter/increase")
     client.post("/microwave/power/increase")
@@ -88,6 +88,6 @@ async def test_cancel_microwave(client, authenticated_headers):
 
 def test_login(client):
     # now it test only that reviewer of this code can obtain a jwt-token
-    response = client.post("/microwave/login")
+    response = client.post("/login", data={'username': 'testuser', 'password': 'testpassword'})
     assert response.status_code == 200
-    assert "token" in response.json()
+    assert "access_token" in response.json()

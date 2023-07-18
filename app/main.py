@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException, WebSocket, WebSocketDisconnect, stat
 from fastapi import FastAPI
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, computed_field, Field
+from pydantic import BaseModel, computed_field
 from starlette.datastructures import State
 from passlib.context import CryptContext
 
@@ -55,9 +55,9 @@ async def shutdown_event():
 class MicrowaveState(BaseModel):
     power: int = 0
     counter: int = 0
-    state: str = Field(..., alias='state')
 
     @computed_field
+    @property
     def state(self) -> str:
         return 'ON' if self.counter or self.power else 'OFF'
 
@@ -73,7 +73,7 @@ async def get_remaining_time():
 
 
 @app.get("/microwave", response_model=MicrowaveState)
-async def get_microwave_state() -> MicrowaveState:
+async def get_microwave_state():
     """
     Get the current microwave state
     """
@@ -91,9 +91,9 @@ def lock_and_return_state_decorator(fn):
             if result:
                 return result
             state = await get_microwave_state()
-            json_state = state.model_dump_json()
+            json_state = state.model_dump()
             await ws_manager.broadcast(json_state)
-            return JSONResponse(status_code=status.HTTP_200_OK, content=json_state)
+            return json_state
     return wrapper
 
 
@@ -172,7 +172,7 @@ async def cancel_microwave(token: Optional[str] = Depends(security)):
     Cancel microwave operations (set all to 0)
     """
     try:
-        payload = jwt.decode(token.credentials, app_config.secret_key, algorithms=[app_config.crypto_algorithm])
+        payload = jwt.decode(token, app_config.secret_key, algorithms=[app_config.crypto_algorithm])
         if payload["valid"]:
             await app.state.redis.set("power", 0)
             await app.state.redis.hmset("counter", {"value": 0, "timestamp": datetime.now().timestamp()})
