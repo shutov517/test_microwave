@@ -91,9 +91,9 @@ def lock_and_return_state_decorator(fn):
             if result:
                 return result
             state = await get_microwave_state()
-            json_state = state.model_dump()
+            json_state = state.model_dump_json()
             await ws_manager.broadcast(json_state)
-            return json_state
+            return state
     return wrapper
 
 
